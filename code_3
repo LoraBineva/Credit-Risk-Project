@@ -1,0 +1,244 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Bineva_L_Project
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Hello! Welcome to the Credit Risk Calculator! Please input some data so we can help you manage your credit!");
+            Console.WriteLine("Input your name:");
+            string UserName = Console.ReadLine();
+            while (!UserInputValidator.checkName(UserName))
+            {
+                Console.WriteLine("Please enter a valid name (non-empty string):");
+                UserName = Console.ReadLine();
+            }
+            Console.WriteLine("Input the amount of money you want to take");
+            double.TryParse(Console.ReadLine(), out double creditAmount);
+            while (!UserInputValidator.checkAmount(creditAmount))
+            {
+                Console.WriteLine("Please enter a valid credit amount (greater then 0):");
+                double.TryParse(Console.ReadLine(), out creditAmount);
+            }
+            Console.WriteLine("Input the year in which you want to take the credit. This year should be between 2023 and 2000");
+            int.TryParse(Console.ReadLine(), out int credit_year);
+            while (!UserInputValidator.checkYear(credit_year))
+            {
+                Console.WriteLine("Please enter a valid year (between 2000 and 2023):");
+                int.TryParse(Console.ReadLine(), out credit_year);
+            }
+            User myUser = new User(UserName, creditAmount, credit_year);
+            // Checking year and getting prOfDefault of deafult (PD)
+
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine($"Based on your credit year, your prOfDefault of default is {myUser.prOfDefault}");
+            Console.ResetColor();
+
+            // Calculating Loss Given Default - LGD
+            double LGD = 0;
+            Console.WriteLine("Tell us more about your credit history. Have you taken any credits before? Answer with a Yes or a No");
+
+            while (LGD == 0) {
+                string answer = Console.ReadLine();
+                if (answer == "Yes" || answer == "yes")
+                {
+                    LGD = LGD_Positive();
+                }
+                else if (answer == "No" || answer == "no")
+                {
+                    LGD = LGD_Negative();
+                }
+                else
+                {
+                    Console.WriteLine("Your answer is incorrect. Please use Yes or No!");
+                }
+            }
+
+            double UserEAD = myUser.UserAssets.GetTotal() - myUser.UserEquity.GetTotal();
+
+
+            double LGD_Positive()
+            {
+                double LGD_yes;
+                Console.WriteLine("Tell us the year in which you took the credit. It has to be a year before the one you want to take the credit in");
+                int past_credit_year = int.Parse(Console.ReadLine());
+                if (past_credit_year < myUser.credit_year)
+                {
+                    Console.WriteLine("How much money did you take back then");
+                    double past_credit = double.Parse(Console.ReadLine());
+                    Console.WriteLine("For how long did you pay the credit");
+                    int months_paid = int.Parse(Console.ReadLine());
+                    LGD_yes = (past_credit / months_paid) * (myUser.credit_year - past_credit_year);
+                }
+                else
+                {
+                    while (past_credit_year >= myUser.credit_year)
+                    {
+                        Console.WriteLine("Please enter a valid year");
+                        var past_credit_year_valid = Console.ReadLine();
+                        int.TryParse(past_credit_year_valid, out past_credit_year);
+                    }
+                    Console.WriteLine("How much money did you take back then");
+                    double past_credit = double.Parse(Console.ReadLine());
+                    Console.WriteLine("For how long did you pay the credit");
+                    int months_paid = int.Parse(Console.ReadLine());
+                    LGD_yes = (past_credit / months_paid) * (myUser.credit_year - past_credit_year);
+                }
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine($"Based on this information, your Loss Given Default is {LGD_yes}");
+                Console.ResetColor();
+                return LGD_yes;
+            }
+            double LGD_Negative()
+            {
+                Console.WriteLine("Tell us more about your company.");
+                Console.WriteLine("For how many years has it been operating?");
+                int operating = int.Parse(Console.ReadLine());
+                Console.WriteLine("What was your profit last year?");
+                double profit = double.Parse(Console.ReadLine());
+                double LGD_no = profit / operating;
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine($"Based on this information, your Loss Given Default is {LGD_no}");
+                Console.ResetColor();
+                return LGD_no;
+            }
+        }
+        class UserPrivateData
+        {
+            protected readonly string name;
+            protected readonly double credit;
+            public readonly int credit_year;
+
+            public UserPrivateData(string name, double credit, int credit_year)
+            {
+                this.name = name;
+                this.credit = credit;
+                this.credit_year = credit_year;
+            }
+        }
+        class User : UserPrivateData
+        {
+            private Dictionary<int, int> PD_values;
+            public int prOfDefault
+            {
+                get
+                {
+                    IEnumerable<int> probability = from KeyValuePair<int, int> x in PD_values
+                                                   where x.Key == credit_year
+                                                   select x.Value;
+                    return probability.First();
+                }
+            }
+
+            public Assets UserAssets;
+            public EquityLiability UserEquity;
+
+            public User(string name, double credit, int credit_year) : base(name, credit, credit_year)
+            {
+                this.PD_values = new Dictionary<int, int>();
+                initDictonary();
+                this.UserAssets = new Assets();
+             }
+            private void initDictonary()
+            {
+                PD_values.Add(2000, 52);
+                PD_values.Add(2001, 47);
+                PD_values.Add(2002, 60);
+                PD_values.Add(2003, 47);
+                PD_values.Add(2004, 53);
+                PD_values.Add(2005, 59);
+                PD_values.Add(2006, 51);
+                PD_values.Add(2007, 49);
+                PD_values.Add(2008, 50);
+                PD_values.Add(2009, 56);
+                PD_values.Add(2010, 43);
+                PD_values.Add(2011, 44);
+                PD_values.Add(2012, 52);
+                PD_values.Add(2013, 44);
+                PD_values.Add(2014, 55);
+                PD_values.Add(2015, 48);
+                PD_values.Add(2016, 56);
+                PD_values.Add(2017, 45);
+                PD_values.Add(2018, 47);
+                PD_values.Add(2019, 48);
+                PD_values.Add(2020, 40);
+                PD_values.Add(2021, 41);
+                PD_values.Add(2022, 58);
+                PD_values.Add(2023, 60);
+            }
+        }
+        class UserInputValidator
+        {
+            public static Boolean checkName(string name)
+            {
+                return !String.IsNullOrEmpty(name);
+            }
+            public static Boolean checkAmount(double amount)
+            {
+                return amount > 0;
+            }
+            public static Boolean checkYear(int year)
+            {
+                return year > 2000 && year <= 2023;
+            }
+        }
+        class Assets : Calculate
+        {
+            private double total_assets;
+            private double current_assets;
+            private double non_current_assets;
+            public double cash { get; set; }
+            public double account_receivables { get; set; }
+            public double other_current_assets { get; set; }
+            public double fixed_assets { get; set; }
+            public double intangible_assets { get; set; }
+            public double other_non_current_assets { get; set; }
+
+            public Assets()
+            {
+            
+
+            }
+            public double GetTotal()
+            {
+                current_assets = (45 * cash / 100 + 25 * account_receivables / 100 + 30 * other_current_assets / 100) * 100;
+                non_current_assets = (50 * fixed_assets / 100 + 15 * intangible_assets / 100 + 35 * other_non_current_assets / 100) * 100;
+                total_assets = (50 * current_assets / 100 + 50 * non_current_assets / 100) * 100;
+                return total_assets;
+            }
+        }
+        class EquityLiability : Calculate
+        {  
+        private double total_EquityLiability { get; set; }
+        private double totalEquity { get; set; }
+        private double currentLiability { get; set; }
+        private double nonCurrentLiability { get; set; }
+        public double commonStock { get; set; }
+        public double additionalCash { get; set; }
+        public double otherEquity { get; set; }
+        public double shortTermDebt { get; set; }
+        public double accountPayable { get; set; }
+        public double taxPayable { get; set; }
+        public double longTermDebt { get; set; }
+        public double pensionReserves { get; set; }
+        public double otherLiabilities { get; set; }
+
+            public double GetTotal()
+            {
+                total_EquityLiability = ((50 * totalEquity) / 100 + (40 * currentLiability) / 100 + (10 * nonCurrentLiability) / 100) * 100;
+                totalEquity = 
+
+                return total_EquityLiability;
+        }
+        
+        interface Calculate
+        {
+            double GetTotal();
+        }
+    }
+}
