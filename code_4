@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using CsvHelper;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Globalization;
 
@@ -12,17 +11,19 @@ namespace Bineva_L_Project
     class Program
     {
 
-    static void Main(string[] args)
+        static void Main(string[] args)
         {
-            using (StreamReader reader = new StreamReader(@"H:\Programing\Assets.csv"))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            List<Assets> recordAssets;
+            using (StreamReader reader = new StreamReader(@"E:\Documents\Projects\VisualStudio\Bineva_L_Calc\Assets.csv"))
             {
-                var recordAssets = csv.GetRecords<Assets>().ToList();
+                var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                recordAssets = csv.GetRecords<Assets>().ToList();
             }
-            using (StreamReader reader = new StreamReader(@"H:\Programing\EquityLiability.csv"))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            List<EquityLiability> recordsEL;
+            using (StreamReader reader = new StreamReader(@"E:\Documents\Projects\VisualStudio\Bineva_L_Calc\EquityLiability.csv"))
             {
-                var recordsEL = csv.GetRecords<EquityLiability>().ToList();
+                var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                recordsEL = csv.GetRecords<EquityLiability>().ToList();
             }
             // This is where the program begins
             Console.WriteLine("Hello! Welcome to the Credit Risk Calculator! Please input some data so we can help you manage your credit!");
@@ -48,10 +49,11 @@ namespace Bineva_L_Project
                 int.TryParse(Console.ReadLine(), out credit_year);
             }
             User myUser = new User(UserName, creditAmount, credit_year);
-
+            myUser.UserAssets = recordAssets[0];
+            myUser.UserEquity = recordsEL[0];
             // Printing out the Probability of Default 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"Based on your credit year, your probability of default is {myUser.prOfDefault}");
+            Console.WriteLine($"Based on your credit year, your probability of default is {String.Format("{0:0.00}", myUser.prOfDefault)}");
             Console.ResetColor();
 
             // Calculating Loss Given Default - LGD
@@ -75,19 +77,20 @@ namespace Bineva_L_Project
                 }
             }
 
-            double UserEAD = (double)myUser.UserAssets.GetTotal() - myUser.UserEquity.GetTotal();
+            double UserEAD = myUser.UserAssets.GetTotal() - myUser.UserEquity.GetTotal();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"Based on the information you provided us with your total Assets are:{myUser.UserAssets.GetTotal()} and your total Equity and Liabilities are: {myUser.UserEquity.GetTotal()}");
-            Console.WriteLine($"Your EAD is {UserEAD}");
+            Console.WriteLine($"Based on the information you provided us with your total Assets are:{String.Format("{0:0.00}", myUser.UserAssets.totalAssets)} " +
+                $"and your total Equity and Liabilities are: {String.Format("{0:0.00}", myUser.UserEquity.total_EquityLiability)}");
+            Console.WriteLine($"Your EAD is {String.Format("{0:0.00}", UserEAD)}");
             Console.ResetColor();
             double creditRisk = UserEAD * myUser.prOfDefault * LGD;
 
             Console.ForegroundColor = ConsoleColor.DarkRed;
-            Console.WriteLine($"Finally, your final credit risk is: {creditRisk}");
+            Console.WriteLine($"Finally, your final credit risk is: {String.Format("{0:0.00}", creditRisk)}");
             if (creditRisk > 1000)
             {
                 Console.WriteLine("Your star value is 1*");
-            } 
+            }
             else if (creditRisk > 5000)
             {
                 Console.WriteLine("Your star value is 2*");
@@ -109,6 +112,7 @@ namespace Bineva_L_Project
                 Console.WriteLine("Your star value is 0*");
             }
             Console.ResetColor();
+            Console.ReadLine();
 
             double LGD_Positive()
             {
@@ -138,7 +142,7 @@ namespace Bineva_L_Project
                     LGD_yes = (past_credit / months_paid) * (myUser.credit_year - past_credit_year);
                 }
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.WriteLine($"Based on this information, your Loss Given Default is {LGD_yes}");
+                Console.WriteLine($"Based on this information, your Loss Given Default is {String.Format("{0:0.00}",LGD_yes)}");
                 Console.ResetColor();
                 return LGD_yes;
             }
@@ -151,7 +155,7 @@ namespace Bineva_L_Project
                 double profit = double.Parse(Console.ReadLine());
                 double LGD_no = profit / operating;
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.WriteLine($"Based on this information, your Loss Given Default is {LGD_no}");
+                Console.WriteLine($"Based on this information, your Loss Given Default is {String.Format("{0:0.00}", LGD_no)}");
                 Console.ResetColor();
                 return LGD_no;
             }
@@ -183,27 +187,13 @@ namespace Bineva_L_Project
                 }
             }
 
-            public double UserAssets
-            {
-                get
-                {
-                    return -1;
-                }
-                set
-                {
-                    Assets a1 = new Assets();
-                    double r = a1.totalAssets;
-                    r = value;
-                }
-            }
-            public EquityLiability UserEquity;
+            public Assets UserAssets { get; set; }
+            public EquityLiability UserEquity { get; set; }
 
             public User(string name, double credit, int credit_year) : base(name, credit, credit_year)
             {
                 this.PD_values = new Dictionary<int, int>();
                 initDictonary();
-                this.UserAssets = UserAssets;
-                this.UserEquity = new EquityLiability();
             }
             private void initDictonary()
             {
@@ -262,23 +252,22 @@ namespace Bineva_L_Project
 
             public Assets()
             {
-              
 
             }
-          
+
             public double GetTotal()
             {
-                currentAssets = (cash + accountReceivables + otherCurrentAssets) ;
+                currentAssets = (cash + accountReceivables + otherCurrentAssets);
                 nonCurrentAssets = (fixedAssets + intangibleAssets + otherNonCurrentAssets);
-                totalAssets = ( currentAssets +  nonCurrentAssets);
+                totalAssets = (currentAssets + nonCurrentAssets);
                 return totalAssets;
             }
         }
         class EquityLiability : Calculate
         {
-            private double total_EquityLiability { get; set; }
-            private double totalEquity { get; set; }
-            private double currentLiability { get; set; }
+            public double total_EquityLiability;
+            private double totalEquity;
+            private double currentLiability;
             private double nonCurrentLiability { get; set; }
             public double commonStock { get; set; }
             public double additionalCash { get; set; }
