@@ -14,13 +14,13 @@ namespace Bineva_L_Project
         static void Main(string[] args)
         {
             List<Assets> recordAssets;
-            using (StreamReader reader = new StreamReader(@"E:\Documents\Projects\VisualStudio\Bineva_L_Calc\Assets.csv"))
+            using (StreamReader reader = new StreamReader(@"C:\Users\Katia\Documents\Visual Studio 2022\Assets.csv"))
             {
                 var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
                 recordAssets = csv.GetRecords<Assets>().ToList();
             }
             List<EquityLiability> recordsEL;
-            using (StreamReader reader = new StreamReader(@"E:\Documents\Projects\VisualStudio\Bineva_L_Calc\EquityLiability.csv"))
+            using (StreamReader reader = new StreamReader(@"C:\Users\Katia\Documents\Visual Studio 2022\EquityLiability.csv"))
             {
                 var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
                 recordsEL = csv.GetRecords<EquityLiability>().ToList();
@@ -53,7 +53,7 @@ namespace Bineva_L_Project
             myUser.UserEquity = recordsEL[0];
             // Printing out the Probability of Default 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"Based on your credit year, your probability of default is {String.Format("{0:0.00}", myUser.prOfDefault)}");
+            Console.WriteLine($"Based on your credit year, your probability of default is {myUser.prOfDefault}");
             Console.ResetColor();
 
             // Calculating Loss Given Default - LGD
@@ -79,14 +79,14 @@ namespace Bineva_L_Project
 
             double UserEAD = myUser.UserAssets.GetTotal() - myUser.UserEquity.GetTotal();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"Based on the information you provided us with your total Assets are:{String.Format("{0:0.00}", myUser.UserAssets.totalAssets)} " +
-                $"and your total Equity and Liabilities are: {String.Format("{0:0.00}", myUser.UserEquity.total_EquityLiability)}");
-            Console.WriteLine($"Your EAD is {String.Format("{0:0.00}", UserEAD)}");
+            Console.WriteLine($"Based on the information you provided us with your total Assets are:{myUser.UserAssets.totalAssets} " +
+                $"and your total Equity and Liabilities are: {myUser.UserEquity.total_EquityLiability}");
+            Console.WriteLine($"Your EAD is {UserEAD}");
             Console.ResetColor();
             double creditRisk = UserEAD * myUser.prOfDefault * LGD;
 
             Console.ForegroundColor = ConsoleColor.DarkRed;
-            Console.WriteLine($"Finally, your final credit risk is: {String.Format("{0:0.00}", creditRisk)}");
+            Console.WriteLine($"Finally, your final credit risk is: {creditRisk}");
             if (creditRisk > 1000)
             {
                 Console.WriteLine("Your star value is 1*");
@@ -142,7 +142,7 @@ namespace Bineva_L_Project
                     LGD_yes = (past_credit / months_paid) * (myUser.credit_year - past_credit_year);
                 }
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.WriteLine($"Based on this information, your Loss Given Default is {String.Format("{0:0.00}",LGD_yes)}");
+                Console.WriteLine($"Based on this information, your Loss Given Default is {LGD_yes}");
                 Console.ResetColor();
                 return LGD_yes;
             }
@@ -155,7 +155,7 @@ namespace Bineva_L_Project
                 double profit = double.Parse(Console.ReadLine());
                 double LGD_no = profit / operating;
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.WriteLine($"Based on this information, your Loss Given Default is {String.Format("{0:0.00}", LGD_no)}");
+                Console.WriteLine($"Based on this information, your Loss Given Default is {LGD_no}");
                 Console.ResetColor();
                 return LGD_no;
             }
@@ -257,9 +257,9 @@ namespace Bineva_L_Project
 
             public double GetTotal()
             {
-                currentAssets = (cash + accountReceivables + otherCurrentAssets);
-                nonCurrentAssets = (fixedAssets + intangibleAssets + otherNonCurrentAssets);
-                totalAssets = (currentAssets + nonCurrentAssets);
+                currentAssets = (0.45*cash + 0.25*accountReceivables + 0.3*otherCurrentAssets);
+                nonCurrentAssets = (0.5*fixedAssets + .15*intangibleAssets + 0.35*otherNonCurrentAssets);
+                totalAssets = (0.5*currentAssets + 0.5*nonCurrentAssets);
                 return totalAssets;
             }
         }
@@ -281,10 +281,10 @@ namespace Bineva_L_Project
 
             public double GetTotal()
             {
-                totalEquity = ((30 * commonStock) / 100 + (30 * additionalCash) / 100 + (40 * otherEquity) / 100) * 100;
-                currentLiability = ((50 * shortTermDebt) / 100 + (40 * accountPayable) / 100 + (10 * taxPayable) / 100) * 100;
-                nonCurrentLiability = ((25 * longTermDebt) / 100 + (57 * pensionReserves) / 100 + (18 * otherLiabilities) / 100) * 100;
-                total_EquityLiability = ((50 * totalEquity) / 100 + (40 * currentLiability) / 100 + (10 * nonCurrentLiability) / 100) * 100;
+                totalEquity = (0.3*commonStock+ 0.3*additionalCash + 0.4* otherEquity);
+                currentLiability = (0.5* shortTermDebt + 0.4* accountPayable + 0.1*taxPayable);
+                nonCurrentLiability = (0.25 * longTermDebt + 0.57 * pensionReserves + 0.18 * otherLiabilities);
+                total_EquityLiability = (0.5 * totalEquity + 0.4 * currentLiability + 0.1 * nonCurrentLiability);
                 return total_EquityLiability;
             }
             public EquityLiability()
